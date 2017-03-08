@@ -12,14 +12,10 @@ from comment import Comment
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
                                autoescape = True)
-                               
-def render_str(template, **params):
-    t = jinja_env.get_template(template)
-    return t.render(params)
 
 secret = 'fart'
 
-def render_str(template, **params):
+def jinja_render_str(template, **params):
     t = jinja_env.get_template(template)
     return t.render(params)
 
@@ -36,10 +32,11 @@ def check_secure_val(secure_val):
 class BlogHandler(webapp2.RequestHandler):
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
+        
 
     def render_str(self, template, **params):
         params['user'] = self.user
-        return render_str(template, **params)
+        return jinja_render_str(template, **params)
 
     def render(self, template, **kw):
         self.write(self.render_str(template, **kw))
@@ -79,36 +76,28 @@ class MainPage(BlogHandler):
 def blog_key(name = 'default'):
     return db.Key.from_path('blogs', name)
 
-class Post(db.Model):
-    subject = db.StringProperty(required = True)
-    content = db.TextProperty(required = True)
-    created = db.DateTimeProperty(auto_now_add = True)
-    last_modified = db.DateTimeProperty(auto_now = True)
-
-    def render(self):
-        self._render_text = self.content.replace('\n', '<br>')
-        return render_str("post.html", p = self)
-
+# Renders homepage with all posts
 class BlogFront(BlogHandler):
     def get(self):
         posts = greetings = Post.all().order('-created')
-        self.render('front.html', posts = posts)
+        self.render('front.html', posts=posts)
 
 class PostPage(BlogHandler):
     def get(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
-        comments = db.GqlQuery("select * from Comment where post_id = "+post_id+" order by created desc")
-
+        comments = db.GqlQuery("select * from Comment where post_id = " + post_id + " order by created desc")
+        
         if not post:
             self.error(404)
             return
 
-        self.render("permalink.html", post = post, comments = comments)
+        self.render("permalink.html", post=post, comments=comments)
 
     def post(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
+        
         
         if not post:
             self.error(404)
@@ -120,14 +109,14 @@ class PostPage(BlogHandler):
         
         if(self.user):
             if(self.request.get('comment')):
-                c = Comment(parent = blog_key(), user_id = self.user.key().id(), post_id = int(post_id), comment = self.request.get('comment'))
+                c = Comment(parent=blog_key(), user_id=self.user.key().id(), post_id=int(post_id), comment = self.request.get('comment'))
                 c.put()
         else:
-            self.render("permalink.html", post = post, error = "You need to login before commenting.!!")
+            self.render("permalink.html", post=post, error="You need to login before commenting.!!")
             return
             
         comments = db.GqlQuery("select * from Comment where post_id = "+post_id+"order by created desc")
-        self.render("permalink.html", post = post, comments = comments, new = self.request.get('comment'))
+        self.render("permalink.html", post=post, comments=comments, new=self.request.get('comment'))
 
 class NewPost(BlogHandler):
     def get(self):
@@ -141,14 +130,21 @@ class NewPost(BlogHandler):
             self.redirect('/blog')
 
         subject = self.request.get('subject')
-        content = self.request.get('content')
-
+        content = self.request.get('content').replace('/n', '<br>')
+        user_id = self.user.key().id()
+       
+        # If we have subject and content of post, add to database and redirect to post page
         if subject and content:
-            p = Post(parent = blog_key(), user_id = self.user.key().id(), subject = subject, content = content, likes = 0)
+            print "user_id: %s" % user_id
+
+            p = Post(parent=blog_key(), user_id=user_id, subject=subject, content=content, likes=0)
+            
+            print p.user_id
+            
             p.put()
             self.redirect('/blog/%s' % str(p.key().id()))
         else:
-            error = "subject and content, please!"
+            error = "please fill in subject and content lines"
             self.render("newpost.html", subject=subject, content=content, error=error)
 
 # Defines a valid username
@@ -219,7 +215,7 @@ class Register(Signup):
         # Give an error if username already exists
         if u:
             msg = 'That user already exists.'
-            self.render('signup-form.html', error_username = msg)
+            self.render('signup-form.html', error_username=msg)
         else:
             # Add user and login and redirect to blog page
             u = User.register(self.username, self.password, self.email)
@@ -245,8 +241,8 @@ class Login(BlogHandler):
             self.redirect('/')
         else:
             # Give an error if there's no associated user account
-            msg = 'Invalid login'
-            self.render('login-form.html', error = msg)
+            msg ='Invalid login'
+            self.render('login-form.html', error=msg)
 
 class Logout(BlogHandler):
     def get(self):
@@ -257,8 +253,8 @@ class Logout(BlogHandler):
             self.redirect('/')
         
         else:
-            error = "You have to be logged in able to log out.  Please log in."
-            self.render('/login', error = error)
+            error ="You have to be logged in able to log out.  Please log in."
+            self.render('/login', error=error)
 
 
 app = webapp2.WSGIApplication([('/?', BlogFront),

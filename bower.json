@@ -1,0 +1,20 @@
+{
+  "name": "udacity-multi-user-blog",
+  "homepage": "https://github.com/chezze911/udacity-multi-user-blog",
+  "authors": [
+    "chezze911"
+  ],
+  "description": "Website for an awesome blog",
+  "main": "blog.py",
+  "keywords": [
+    "Udacity"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
