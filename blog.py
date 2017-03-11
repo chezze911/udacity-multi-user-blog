@@ -95,6 +95,7 @@ class PostPage(BlogHandler):
             return
 
         error = self.request.get("error")
+        
         self.render("permalink.html", 
                     post=post, 
                     comments=comments, 
@@ -106,9 +107,7 @@ class PostPage(BlogHandler):
                                int(post_id), 
                                parent=blog_key())
         post = db.get(key)
-        updatedlike = 0
         c = ""
-        
         
         if not post:
             self.error(404)
@@ -122,32 +121,33 @@ class PostPage(BlogHandler):
                                     str(self.user.key().id()))
                 
             if self.user.key().id() == post.user_id:
-                self.redirect("/blog/" + post_id + "?error=You cannot like your own post")
+                self.redirect("/blog/" + post_id + "?error=You cannot like your " +  "own post")
             
                 return 
+            
             elif likes.count() ==0:
                 l = Like(parent=blog_key(), 
                          user_id=self.user.key().id(),
                          post_id=int(post_id))
-                l.put();
-                updatedlike= updatedlike + 1
+                l.put()
                 
-            # Commenting on a post
+            # Commenting on a post creates a new comment tuple that stores post and user data
             if(self.request.get('comment')):
                 c = Comment(parent=blog_key(), 
                             user_id=self.user.key().id(), 
                             post_id=int(post_id), 
-                            comment = self.request.get('comment'))
+                            comment=self.request.get('comment'))
                 c.put()
         else:
             self.redirect("/login?error=Please login before commenting or liking.")
-            return
-            
-    
+            return       
+        
+        
         self.render("permalink.html", 
                     post=post, 
                     comments=comments, 
-                    numOfLikes=likes.count()+updatedlike)
+                    numOfLikes=likes.count(),
+                    new=c)
 
 class NewPost(BlogHandler):
     def get(self):
