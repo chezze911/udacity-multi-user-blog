@@ -8,6 +8,7 @@ from google.appengine.ext import db
 from user import User
 from post import Post
 from comment import Comment
+from like import Like 
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
@@ -86,37 +87,67 @@ class PostPage(BlogHandler):
     def get(self, post_id):
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
-        comments = db.GqlQuery("select * from Comment where post_id = " + post_id + " order by created desc")
+        comments = db.GqlQuery("select * from Comment where post_id = "+post_id+" order by created desc")
+        likes = db.GqlQuery("select * from Like where post_id="+post_id)
         
         if not post:
             self.error(404)
             return
 
-        self.render("permalink.html", post=post, comments=comments)
+        error = self.request.get("error")
+        self.render("permalink.html", 
+                    post=post, 
+                    comments=comments, 
+                    numOfLikes=likes.count(), 
+                    error=error)
 
     def post(self, post_id):
-        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+        key = db.Key.from_path('Post', 
+                               int(post_id), 
+                               parent=blog_key())
         post = db.get(key)
+        updatedlike = 0
+        c = ""
         
         
         if not post:
             self.error(404)
             return
               
-        if(self.request.get('like') and self.request.get('like') == "update"):
-            post.likes = post.likes + 1;
-            post.put();
-        
+        # When like is clicked, like value increases by 1.          
         if(self.user):
+            
+            if(self.request.get('like') and self.request.get('like') == "update"):
+                likes = db.GqlQuery("select * from Like where post_id = "+post_id+" and user_id = "+
+                                    str(self.user.key().id()))
+                
+            if self.user.key().id() == post.user_id:
+                self.redirect("/blog/" + post_id + "?error=You cannot like your own post")
+            
+                return 
+            elif likes.count() ==0:
+                l = Like(parent=blog_key(), 
+                         user_id=self.user.key().id(),
+                         post_id=int(post_id))
+                l.put();
+                updatedlike= updatedlike + 1
+                
+            # Commenting on a post
             if(self.request.get('comment')):
-                c = Comment(parent=blog_key(), user_id=self.user.key().id(), post_id=int(post_id), comment = self.request.get('comment'))
+                c = Comment(parent=blog_key(), 
+                            user_id=self.user.key().id(), 
+                            post_id=int(post_id), 
+                            comment = self.request.get('comment'))
                 c.put()
         else:
-            self.render("permalink.html", post=post, error="You need to login before commenting.!!")
+            self.redirect("/login?error=Please login before commenting or liking.")
             return
             
-        comments = db.GqlQuery("select * from Comment where post_id = "+post_id+"order by created desc")
-        self.render("permalink.html", post=post, comments=comments, new=self.request.get('comment'))
+    
+        self.render("permalink.html", 
+                    post=post, 
+                    comments=comments, 
+                    numOfLikes=likes.count()+updatedlike)
 
 class NewPost(BlogHandler):
     def get(self):
@@ -137,7 +168,11 @@ class NewPost(BlogHandler):
         if subject and content:
             print "user_id: %s" % user_id
 
-            p = Post(parent=blog_key(), user_id=user_id, subject=subject, content=content, likes=0)
+            p = Post(parent=blog_key(), 
+                     user_id=user_id, 
+                     subject=subject, 
+                     content=content, 
+                     likes=0)
             
             print p.user_id
             
@@ -145,7 +180,10 @@ class NewPost(BlogHandler):
             self.redirect('/blog/%s' % str(p.key().id()))
         else:
             error = "please fill in subject and content lines"
-            self.render("newpost.html", subject=subject, content=content, error=error)
+            self.render("newpost.html", 
+                        subject=subject, 
+                        content=content, 
+                        error=error)
 
 # Defines a valid username
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")

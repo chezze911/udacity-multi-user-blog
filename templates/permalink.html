@@ -1,15 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <div class="row">
-        {{post.render() | safe}}
+  	<div class="row">
+  		<div class="col-md-12">
+        	{{post.render() | safe}}
+    	</div>
     </div>
 
     <div class="row">
         <div class="sub-work col-md-12">
             <form method="post" role="form">
                 <input type="hidden" class="form-control" id="like" name="like" value="update">
-                <button type="submit" class="btn btn-primary">Like {{post.likes}}</button>
+                <button type="submit" class="btn btn-primary">{{numOfLikes}} Likes</button>
             </form>
         </div>
 
@@ -19,13 +21,6 @@
                     <label for="comment">Comment:</label>
                     <input type="text" class="form-control" id="comment" name="comment" value="">
                 </div>
-
-                {% if error %}
-                <div class="alert alert-danger" role="alert">
-                    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-                    {{error}}
-                </div>
-                {% endif %}
 
                 <button type="submit" class="btn btn-success">Submit</button>
             </form>

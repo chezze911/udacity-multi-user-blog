@@ -20,6 +20,8 @@
 
   <div class="login-area">
     {% if user %}
+    <br>
+    <br>
       <h1>{{user.name}}</h1>
       <p>
         <a class="btn btn-success" href="/blog/newpost">New Post</a>
@@ -32,10 +34,11 @@
       <a class="login-link" href="/signup">signup</a>
     {% endif %}
   </div>
-
+  <br>
+  <br>
   <div id="content">
-  {% block content %}
-  {% endblock %}
+    {% block content %}
+    {% endblock %}
   </div>
 </body>
 

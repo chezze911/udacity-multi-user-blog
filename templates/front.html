@@ -7,10 +7,14 @@
 		</div>
 	</div>
   {% for p in posts %}
+  <br>
+  <br>
   	<div class="row">
-    	{{ p.render() | safe }}
+      <div class="col-md-12">
+    	   {{ p.render() | safe }}
+      </div>
     </div>
-    <br><br>
+
   {% endfor %}
 
 {% endblock %}
