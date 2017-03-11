@@ -108,6 +108,8 @@ class PostPage(BlogHandler):
                                parent=blog_key())
         post = db.get(key)
         c = ""
+        comments = db.GqlQuery("select * from Comment where post_id = "+post_id+" order by created desc")
+        likes = db.GqlQuery("select * from Like where post_id="+post_id)
         
         if not post:
             self.error(404)
@@ -125,7 +127,7 @@ class PostPage(BlogHandler):
             
                 return 
             
-            elif likes.count() ==0:
+            elif likes.count()==0:
                 l = Like(parent=blog_key(), 
                          user_id=self.user.key().id(),
                          post_id=int(post_id))
@@ -140,7 +142,7 @@ class PostPage(BlogHandler):
                 c.put()
         else:
             self.redirect("/login?error=Please login before commenting or liking.")
-            return       
+            return  
         
         
         self.render("permalink.html", 
