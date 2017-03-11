@@ -115,7 +115,7 @@ class PostPage(BlogHandler):
             self.error(404)
             return
               
-        # When like is clicked, like value increases by 1.          
+        # When like is clicked, like value increases by 1 if user is not post user         
         if(self.user):
             
             if(self.request.get('like') and self.request.get('like') == "update"):
@@ -123,7 +123,7 @@ class PostPage(BlogHandler):
                                     str(self.user.key().id()))
                 
             if self.user.key().id() == post.user_id:
-                self.redirect("/blog/" + post_id + "?error=You cannot like your " +  "own post")
+                self.redirect('/likeError')
             
                 return 
             
@@ -141,7 +141,7 @@ class PostPage(BlogHandler):
                             comment=self.request.get('comment'))
                 c.put()
         else:
-            self.redirect("/login?error=Please login before commenting or liking.")
+            self.redirect('/loginError')
             return  
         
         
@@ -151,6 +151,27 @@ class PostPage(BlogHandler):
                     numOfLikes=likes.count(),
                     new=c)
 
+
+class LoginError(BlogHandler):
+    def get(self):
+        self.write("Please login before commenting, editing, deleting, or liking.")
+        
+        
+class LikeError(BlogHandler):
+    def get(self):
+        self.write("You can't like your own post & can only like a post once.")
+
+
+class EditDeleteError(BlogHandler):
+    def get(self):
+        self.write('You can only edit or delete posts you have created.')
+
+
+class CommentError(BlogHandler):
+    def get(self):
+        self.write('You can only edit or delete comments you have created.')
+        
+        
 class NewPost(BlogHandler):
     def get(self):
         if self.user:
@@ -303,5 +324,9 @@ app = webapp2.WSGIApplication([('/?', BlogFront),
                                ('/signup', Register),
                                ('/login', Login),
                                ('/logout', Logout),
+                               ('/likeError', LikeError),
+                               ('/editDeleteError', EditDeleteError),
+                               ('/commentError', CommentError),
+                               ('/loginError', LoginError)
                                ],
                               debug=True)
