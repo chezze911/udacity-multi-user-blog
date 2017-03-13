@@ -151,7 +151,125 @@ class PostPage(BlogHandler):
                     numOfLikes=likes.count(),
                     new=c)
 
+class EditPost(BlogHandler):
+    def get(self):
+        if self.user:
+            key = db.Key.from_path('Post', 
+                                   int(post_id), 
+                                   parent = blog_key())
+            post = db.get(key)
+            
+            if post.user_id == self.user.key().id():
+                self.render('editpost.html', 
+                            subject = post.subject,
+                            content = post.content)
+            
+            else:
+                self.redirect('/editDeleteError')
+        
+        else:
+            self.redirect('/loginError')
+            
+    def post(self, post_id):
+        
+        if not self.user:
+            self.redirect('/blog')
+            
+        subject = self.request.get('subject')
+        content = self.request.get('content')
+        
+        if subject and content:
+            key = db.Key.from_path('Post',
+                                   int(post_id),
+                                   parent = blog_key())
+            post = db.get(key)
+            post.subject = subject
+            post.content = content
+            post.put()
+            
+            self.redirect('/blog/%s' % post_id)
+        
+        else:
+            error = 'Please provide subject and content!'
+            self.render('editpost.html',
+                        subject = subject,
+                        content = content,
+                        error = error)
 
+
+class DeletePost(BlogHandler):
+    def get(self, post_id):
+        if self.user:
+            key = db.Key.from_path('Post',
+                                   int(post_id),
+                                   parent = blog_key())
+            post = db.get(key)
+            if post.user_id == self.user.key().id():
+                post.delete()
+                self.redirect('deletepost.html')
+            else:
+                self.redirect('/editDeleteError')
+        
+        else:
+            self.redirect('/loginError')
+            
+
+class EditComment(BlogHandler):
+    def get(self, post_id, comment_id):
+        if self.user:
+            key = db.Key.from_path('Comment',
+                                   int(comment_id),
+                                   parent = blog_key())
+            c = db.get(key)
+            if c.user_id == self.user.key().id():
+                self.render('editcomment.html', 
+                            comment = c.comment)
+            else:
+                self.redirect('/editDeleteError')
+            
+        else:
+            self.redirect('/loginError')
+            
+    
+    def post(self, post_id, comment_id):
+        if not self.user:
+            self.redirect('/blog')
+            
+        comment = self.request.get('comment')
+        
+        if comment:
+            key = db.Key.from_path('Comment',
+                                   int(comment_id),
+                                   parent = blog_key())
+            c = db.get(key)
+            c.comment = comment
+            c.put()
+            self.redirect('/blog%s' % post_id)
+        
+        else:
+            error = "Please provide subject and content!"
+            self.render('editpost.html',
+                        subject = subject,
+                        content = content,
+                        error = error)
+            
+
+class DeleteComment(BlogHandler):
+    def get(self, post_id, comment_id):
+        if self.user:
+            key = db.Key.from_path('Comment', 
+                                   int(comment_id),
+                                   parent = blog_key())
+            c = db.get(key)
+            if c.user_id == self.user.key().id():
+                c.delete()
+                self.redirect('/blog/%s' % str(post_id))
+            else:    
+                self.redirect('/editDeleteError')
+        else:
+            self.redirect('/commentError')
+                
+            
 class LoginError(BlogHandler):
     def get(self):
         self.write("Please login before commenting, editing, deleting, or liking.")
@@ -307,15 +425,8 @@ class Login(BlogHandler):
 
 class Logout(BlogHandler):
     def get(self):
-        
-        if self.user:
-            
-            self.logout()
-            self.redirect('/')
-        
-        else:
-            error ="You have to be logged in able to log out.  Please log in."
-            self.render('/login', error=error)
+        self.logout()
+        self.redirect('/')
 
 
 app = webapp2.WSGIApplication([('/?', BlogFront),
@@ -327,6 +438,10 @@ app = webapp2.WSGIApplication([('/?', BlogFront),
                                ('/likeError', LikeError),
                                ('/editDeleteError', EditDeleteError),
                                ('/commentError', CommentError),
-                               ('/loginError', LoginError)
+                               ('/loginError', LoginError),
+                               ('/blog/([0-9]+)/editpost', EditPost),
+                               ('/blog/([0-9]+)/deletepost', DeletePost),
+                               ('/blog/([0-9]+)/editcomment/([0-9]+)', EditComment),
+                               ('/blog/([0-9]+)/deletecomment/([0-9]+)', DeleteComment),
                                ],
                               debug=True)

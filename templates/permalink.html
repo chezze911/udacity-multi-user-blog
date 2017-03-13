@@ -2,17 +2,31 @@
 
 {% block content %}
   	<div class="row">
-  		<div class="col-md-12">
-        	{{post.render() | safe}}
-    	</div>
+        <div class="col-md-7">
+            {% if error %}
+                <div class="error"
+                    {{error}}
+                </div>
+            {% endif %}
+        </div>
+        <!-- <div class="col-md-5">
+            <a id="post-delete" class="btn btn-danger pull-right" href="/blog/{{post.key().id()}}/deletepost/{{post.key().id()}}">Delete</a>
+            <a id="post-edit" class="btn btn-primary pull-right" href="/blog/{{post.key().id()}}/editpost/{{post.key().id()}}">Edit</a>
+        </div> -->
+        {{post.render() | safe}}
     </div>
 
     <div class="row">
-        <div class="sub-work col-md-12">
+        <div class="sub-work col-md-6">
             <form method="post" role="form">
                 <input type="hidden" class="form-control" id="like" name="like" value="update">
                 <button type="submit" class="btn btn-primary">{{numOfLikes}} Likes</button>
             </form>
+        </div>
+        <div class="sub-work col-md-6">
+            <a id="post-delete" class="btn btn-danger pull-right" href="/blog/{{post.key().id()}}/deletepost/{{post.key().id()}}">Delete</a>
+            <span class="separator"> | </span>
+            <a id="post-edit" class="btn btn-primary pull-right" href="/blog/{{post.key().id()}}/editpost/{{post.key().id()}}">Edit</a>
         </div>
 
         <div class="sub-work col-md-12">
@@ -20,6 +34,7 @@
                 <div class="form-group">
                     <label for="comment">Comment:</label>
                     <input type="text" class="form-control" id="comment" name="comment" value="">
+
                 </div>
 
                 <button type="submit" class="btn btn-success">Submit</button>
@@ -37,6 +52,7 @@
             {% for c in comments %}
             <blockquote>
                 <p>{{ c.comment }}</p>
+
                 <footer>{{ c.getUserName() }}</footer>
             </blockquote>
             {% endfor %}
