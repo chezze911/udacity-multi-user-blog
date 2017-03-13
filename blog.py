@@ -9,6 +9,7 @@ from user import User
 from post import Post
 from comment import Comment
 from like import Like 
+from unlike import Unlike
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
@@ -89,6 +90,7 @@ class PostPage(BlogHandler):
         post = db.get(key)
         comments = db.GqlQuery("select * from Comment where post_id = "+post_id+" order by created desc")
         likes = db.GqlQuery("select * from Like where post_id="+post_id)
+        unlikes = db.GqlQuery("select * from Unlike where post_id="+post_id)
         
         if not post:
             self.error(404)
@@ -100,6 +102,7 @@ class PostPage(BlogHandler):
                     post=post, 
                     comments=comments, 
                     numOfLikes=likes.count(), 
+                    numOfUnlikes=unlikes.count(),
                     error=error)
 
     def post(self, post_id):
@@ -110,20 +113,26 @@ class PostPage(BlogHandler):
         c = ""
         comments = db.GqlQuery("select * from Comment where post_id = "+post_id+" order by created desc")
         likes = db.GqlQuery("select * from Like where post_id="+post_id)
+        unlikes = db.GqlQuery("select * from Unlike where post_id="+post_id)
+      
         
         if not post:
             self.error(404)
             return
               
-        # When like is clicked, like value increases by 1 if user is not post user         
+        # When like/unlike is clicked, like/unlike value increases by 1 if user is not post user         
         if(self.user):
             
             if(self.request.get('like') and self.request.get('like') == "update"):
                 likes = db.GqlQuery("select * from Like where post_id = "+post_id+" and user_id = "+
                                     str(self.user.key().id()))
+             
+            if(self.request.get('unlike') and self.request.get('unlike') == "update"):
+                unlikes = db.GqlQuery("select * from Unlike where post_id = "+post_id+" and user_id = "+
+                                    str(self.user.key().id()))
                 
             if self.user.key().id() == post.user_id:
-                self.redirect('/likeError')
+                self.write("You cannot like/comment on your own post!")
             
                 return 
             
@@ -132,6 +141,12 @@ class PostPage(BlogHandler):
                          user_id=self.user.key().id(),
                          post_id=int(post_id))
                 l.put()
+                
+            elif unlikes.count()==0:
+                ul = Unlike(parent=blog_key(), 
+                         user_id=self.user.key().id(),
+                         post_id=int(post_id))
+                ul.put()
                 
             # Commenting on a post creates a new comment tuple that stores post and user data
             if(self.request.get('comment')):
@@ -149,7 +164,38 @@ class PostPage(BlogHandler):
                     post=post, 
                     comments=comments, 
                     numOfLikes=likes.count(),
+                    numOfUnlikes=unlikes.count(),
                     new=c)
+        
+# class UnlikePost(BlogHandler):
+#     def get(self, post_id):
+#         key = db.Key.from_path('Post', 
+#                                int(post_id), 
+#                                parent=blog_key())
+#         post = db.get(key)
+        
+#         if not post:
+#             self.error(404)
+#             return
+        
+#         if not self.user:
+#             self.redirect('/login')
+#             return
+        
+#         l = Like.query(Like.post == post.key).get()
+        
+#         if l:
+#             authors = l.author
+#             for author in authors:
+#                 if author == self.user.key:
+#                     l.author.remove(author)
+#                     flag = True
+#                 if not flag:
+#                     self.redirct('/blog/%s' % str(post.key.id()))
+#                 else:
+#                     self.write("User does not exist!")
+#         else:
+#             self.write("No like object was created!")
 
 class EditPost(BlogHandler):
     def get(self):
@@ -273,11 +319,6 @@ class DeleteComment(BlogHandler):
 class LoginError(BlogHandler):
     def get(self):
         self.write("Please login before commenting, editing, deleting, or liking.")
-        
-        
-class LikeError(BlogHandler):
-    def get(self):
-        self.write("You can't like your own post & can only like a post once.")
 
 
 class EditDeleteError(BlogHandler):
@@ -435,7 +476,7 @@ app = webapp2.WSGIApplication([('/?', BlogFront),
                                ('/signup', Register),
                                ('/login', Login),
                                ('/logout', Logout),
-                               ('/likeError', LikeError),
+                               # ('/blog/unlike/([0-9]+)', UnLike),
                                ('/editDeleteError', EditDeleteError),
                                ('/commentError', CommentError),
                                ('/loginError', LoginError),
