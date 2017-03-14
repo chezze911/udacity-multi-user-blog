@@ -14,11 +14,6 @@
     	   {{ p.render() | safe }}
       </div>
     </div>
-    <div align = "right">
-      <a href="/blog/{{p.key().id()}}/editpost">Edit</a>
-      <a href="/blog/{{p.key().id()}}/deletepost">Delete</a>
-    </div>
-
   {% endfor %}
 
 {% endblock %}

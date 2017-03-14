@@ -123,11 +123,11 @@ class PostPage(BlogHandler):
         # When like/unlike is clicked, like/unlike value increases by 1 if user is not post user         
         if(self.user):
             
-            if(self.request.get('like') and self.request.get('like') == "update"):
+            if(self.request.get('like') and self.request.get('like') == "updateLike"):
                 likes = db.GqlQuery("select * from Like where post_id = "+post_id+" and user_id = "+
                                     str(self.user.key().id()))
              
-            if(self.request.get('unlike') and self.request.get('unlike') == "update"):
+            if(self.request.get('unlike') and self.request.get('unlike') == "updateUnlike"):
                 unlikes = db.GqlQuery("select * from Unlike where post_id = "+post_id+" and user_id = "+
                                     str(self.user.key().id()))
                 
@@ -166,36 +166,6 @@ class PostPage(BlogHandler):
                     numOfLikes=likes.count(),
                     numOfUnlikes=unlikes.count(),
                     new=c)
-        
-# class UnlikePost(BlogHandler):
-#     def get(self, post_id):
-#         key = db.Key.from_path('Post', 
-#                                int(post_id), 
-#                                parent=blog_key())
-#         post = db.get(key)
-        
-#         if not post:
-#             self.error(404)
-#             return
-        
-#         if not self.user:
-#             self.redirect('/login')
-#             return
-        
-#         l = Like.query(Like.post == post.key).get()
-        
-#         if l:
-#             authors = l.author
-#             for author in authors:
-#                 if author == self.user.key:
-#                     l.author.remove(author)
-#                     flag = True
-#                 if not flag:
-#                     self.redirct('/blog/%s' % str(post.key.id()))
-#                 else:
-#                     self.write("User does not exist!")
-#         else:
-#             self.write("No like object was created!")
 
 class EditPost(BlogHandler):
     def get(self):
@@ -252,7 +222,7 @@ class DeletePost(BlogHandler):
             post = db.get(key)
             if post.user_id == self.user.key().id():
                 post.delete()
-                self.redirect('deletepost.html')
+                self.redirect('/blog/%s' % str(p.key().id()))
             else:
                 self.redirect('/editDeleteError')
         
@@ -476,13 +446,12 @@ app = webapp2.WSGIApplication([('/?', BlogFront),
                                ('/signup', Register),
                                ('/login', Login),
                                ('/logout', Logout),
-                               # ('/blog/unlike/([0-9]+)', UnLike),
                                ('/editDeleteError', EditDeleteError),
                                ('/commentError', CommentError),
                                ('/loginError', LoginError),
-                               ('/blog/([0-9]+)/editpost', EditPost),
-                               ('/blog/([0-9]+)/deletepost', DeletePost),
-                               ('/blog/([0-9]+)/editcomment/([0-9]+)', EditComment),
-                               ('/blog/([0-9]+)/deletecomment/([0-9]+)', DeleteComment),
+                               ('/blog/editpost/([0-9]+)', EditPost),
+                               ('/blog/deletepost/([0-9]+)', DeletePost),
+                               ('/blog/editcomment/([0-9]+)', EditComment),
+                               ('/blog/deletecomment/([0-9]+)', DeleteComment),
                                ],
                               debug=True)
