@@ -9,7 +9,6 @@ from user import User
 from post import Post
 from comment import Comment
 from like import Like 
-from unlike import Unlike
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
@@ -90,7 +89,6 @@ class PostPage(BlogHandler):
         post = db.get(key)
         comments = db.GqlQuery("select * from Comment where post_id = "+post_id+" order by created desc")
         likes = db.GqlQuery("select * from Like where post_id="+post_id)
-        unlikes = db.GqlQuery("select * from Unlike where post_id="+post_id)
         
         if not post:
             self.error(404)
@@ -156,12 +154,11 @@ class PostPage(BlogHandler):
 
 class EditPost(BlogHandler):
     def get(self):
-        if self.user:
-            key = db.Key.from_path('Post', 
-                                   int(post_id), 
-                                   parent = blog_key())
-            post = db.get(key)
-            
+        key = db.Key.from_path('Post', 
+                                int(post_id), 
+                                parent = blog_key())
+        post = db.get(key)
+        if self.user: 
             if post.user_id == self.user.key().id():
                 self.render('editpost.html', 
                             subject = post.subject,
@@ -202,28 +199,28 @@ class EditPost(BlogHandler):
 
 class DeletePost(BlogHandler):
     def get(self, post_id):
+        key = db.Key.from_path('Post',
+                                int(post_id),
+                                parent = blog_key())
+        post = db.get(key)
+        
         if self.user:
-            key = db.Key.from_path('Post',
-                                   int(post_id),
-                                   parent = blog_key())
-            post = db.get(key)
             if post.user_id == self.user.key().id():
                 post.delete()
-                self.redirect('/blog/%s' % str(p.key().id()))
+                self.redirect('/blog%s' % post_id)
             else:
-                self.redirect('/editDeleteError')
-        
+                self.redirect('/editDeleteError')  
         else:
             self.redirect('/loginError')
             
 
 class EditComment(BlogHandler):
     def get(self, post_id, comment_id):
-        if self.user:
-            key = db.Key.from_path('Comment',
+        key = db.Key.from_path('Comment',
                                    int(comment_id),
                                    parent = blog_key())
-            c = db.get(key)
+        c = db.get(key)
+        if self.user:
             if c.user_id == self.user.key().id():
                 self.render('editcomment.html', 
                             comment = c.comment)
@@ -259,11 +256,11 @@ class EditComment(BlogHandler):
 
 class DeleteComment(BlogHandler):
     def get(self, post_id, comment_id):
-        if self.user:
-            key = db.Key.from_path('Comment', 
+        key = db.Key.from_path('Comment', 
                                    int(comment_id),
                                    parent = blog_key())
-            c = db.get(key)
+        c = db.get(key)
+        if self.user:
             if c.user_id == self.user.key().id():
                 c.delete()
                 self.redirect('/blog/%s' % str(post_id))
