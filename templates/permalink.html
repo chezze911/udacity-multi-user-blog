@@ -19,10 +19,6 @@
                 <input type="hidden" class="form-control" id="like" name="like" value="updateLike">
                 <button type="submit" class="btn btn-primary">{{numOfLikes}} Likes</button>
             </form>
-            <form method="post" role="form">
-                <input type="hidden" class="form-control" id="unlike" name="unlike" value="updateUnlike">
-                <button type="submit" class="btn btn-danger">{{numOfUnlikes}} Unlikes</button>
-            </form>
             <a class="btn btn-danger pull-right" href="/blog/deletepost/{{post.key().id()}}">Delete Post</a>
             <a class="btn btn-primary pull-right" href="/blog/editpost/{{post.key().id()}}">Edit Post</a>
         </div>
@@ -51,10 +47,12 @@
             {% for c in comments %}
             <blockquote>
                 {{ c.comment }}
-                {% set commentUser = (c.getUserName()).name %}
-                {% if commentUser %} 
-                    <a class="btn btn-primary pull-right" href="/blog/editcomment/{{c.key().id()}}">Edit Comment</a>
-                    <a class="btn btn-danger pull-right" href="/blog/deletecomment/{{c.key().id()}}">Delete Comment</a>
+                {{ c.user_id }}
+                {% if c.user_id %} 
+                    <a class="btn btn-danger pull-right" href="/blog/deletecomment/{{post.key().id()}}/{{c.key().id()}}">Delete Comment</a>
+                    <a class="btn btn-primary pull-right" href="/blog/editcomment/{{post.key().id()}}/{{c.key().id()}}">Edit Comment</a>
+                 {% else %}
+                  <div> Not comment user </div>
                  {% endif %}   
                 <footer>{{ c.getUserName() }}</footer>
             </blockquote>

@@ -102,7 +102,6 @@ class PostPage(BlogHandler):
                     post=post, 
                     comments=comments, 
                     numOfLikes=likes.count(), 
-                    numOfUnlikes=unlikes.count(),
                     error=error)
 
     def post(self, post_id):
@@ -113,22 +112,17 @@ class PostPage(BlogHandler):
         c = ""
         comments = db.GqlQuery("select * from Comment where post_id = "+post_id+" order by created desc")
         likes = db.GqlQuery("select * from Like where post_id="+post_id)
-        unlikes = db.GqlQuery("select * from Unlike where post_id="+post_id)
       
         
         if not post:
             self.error(404)
             return
               
-        # When like/unlike is clicked, like/unlike value increases by 1 if user is not post user         
+        # When like is clicked, like value increases by 1 if user is not post user         
         if(self.user):
             
             if(self.request.get('like') and self.request.get('like') == "updateLike"):
                 likes = db.GqlQuery("select * from Like where post_id = "+post_id+" and user_id = "+
-                                    str(self.user.key().id()))
-             
-            if(self.request.get('unlike') and self.request.get('unlike') == "updateUnlike"):
-                unlikes = db.GqlQuery("select * from Unlike where post_id = "+post_id+" and user_id = "+
                                     str(self.user.key().id()))
                 
             if self.user.key().id() == post.user_id:
@@ -141,12 +135,6 @@ class PostPage(BlogHandler):
                          user_id=self.user.key().id(),
                          post_id=int(post_id))
                 l.put()
-                
-            elif unlikes.count()==0:
-                ul = Unlike(parent=blog_key(), 
-                         user_id=self.user.key().id(),
-                         post_id=int(post_id))
-                ul.put()
                 
             # Commenting on a post creates a new comment tuple that stores post and user data
             if(self.request.get('comment')):
@@ -164,7 +152,6 @@ class PostPage(BlogHandler):
                     post=post, 
                     comments=comments, 
                     numOfLikes=likes.count(),
-                    numOfUnlikes=unlikes.count(),
                     new=c)
 
 class EditPost(BlogHandler):
@@ -451,7 +438,7 @@ app = webapp2.WSGIApplication([('/?', BlogFront),
                                ('/loginError', LoginError),
                                ('/blog/editpost/([0-9]+)', EditPost),
                                ('/blog/deletepost/([0-9]+)', DeletePost),
-                               ('/blog/editcomment/([0-9]+)', EditComment),
-                               ('/blog/deletecomment/([0-9]+)', DeleteComment),
+                               ('/blog/editcomment/([0-9]+)/([0-9]+)', EditComment),
+                               ('/blog/deletecomment/([0-9]+)/([0-9]+)', DeleteComment),
                                ],
                               debug=True)
