@@ -109,7 +109,7 @@ class PostPage(BlogHandler):
         post = db.get(key)
         c = ""
         comments = db.GqlQuery("select * from Comment where post_id = "+post_id+" order by created desc")
-        likes = db.GqlQuery("select * from Like where post_id="+post_id)
+        likes = db.GqlQuery("select * from Like where post_id = "+post_id)
       
         
         if not post:
@@ -118,11 +118,11 @@ class PostPage(BlogHandler):
               
         # When like is clicked, like value increases by 1 if user is not post user         
         if(self.user):
-            
+            print "inside post method"
             if(self.request.get('like') and self.request.get('like') == "updateLike"):
                 likes = db.GqlQuery("select * from Like where post_id = "+post_id+" and user_id = "+
                                     str(self.user.key().id()))
-                
+            print likes.count()
             if self.user.key().id() == post.user_id:
                 self.write("You cannot like/comment on your own post!")
             
@@ -146,11 +146,7 @@ class PostPage(BlogHandler):
             return  
         
         
-        self.render("permalink.html", 
-                    post=post, 
-                    comments=comments, 
-                    numOfLikes=likes.count(),
-                    new=c)
+        self.redirect('/blog/%s' % post_id)
 
 class EditPost(BlogHandler):
     def get(self, post_id):
@@ -206,8 +202,9 @@ class DeletePost(BlogHandler):
         
         if self.user:
             if post.user_id == self.user.key().id():
+                # self.render('deletepost.html')
                 post.delete()
-                self.redirect('/blog%s' % post_id)
+                self.redirect('/')
             else:
                 self.redirect('/editDeleteError')  
         else:
@@ -217,8 +214,8 @@ class DeletePost(BlogHandler):
 class EditComment(BlogHandler):
     def get(self, post_id, comment_id):
         key = db.Key.from_path('Comment',
-                                   int(comment_id),
-                                   parent = blog_key())
+                                int(comment_id),
+                                parent = blog_key())
         c = db.get(key)
         if self.user:
             if c.user_id == self.user.key().id():
@@ -244,7 +241,7 @@ class EditComment(BlogHandler):
             c = db.get(key)
             c.comment = comment
             c.put()
-            self.redirect('/blog%s' % post_id)
+            self.redirect('/blog/%s' % post_id)
         
         else:
             error = "Please provide subject and content!"
@@ -294,7 +291,7 @@ class NewPost(BlogHandler):
 
     def post(self):
         if not self.user:
-            self.redirect('/blog')
+            self.redirect('/login')
 
         subject = self.request.get('subject')
         content = self.request.get('content').replace('/n', '<br>')
