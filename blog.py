@@ -14,7 +14,8 @@ template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
                                autoescape = True)
 
-secret = 'fart'
+file = open('secret.txt', 'r')
+secret = file.read()
 
 def jinja_render_str(template, **params):
     t = jinja_env.get_template(template)
@@ -118,7 +119,7 @@ class PostPage(BlogHandler):
         comments = db.GqlQuery("select * from Comment where post_id = "+post_id+" order by created desc")
         likes = db.GqlQuery("select * from Like where post_id = "+post_id)
       
-        
+        # Check first if the post exists and throw an error if it doesn't
         if not post:
             self.error(404)
             return
@@ -136,7 +137,7 @@ class PostPage(BlogHandler):
             
                 return 
             
-            #
+            # add 1 to likes count if value is 0
             elif likes.count()==0:
                 l = Like(parent=blog_key(), 
                          user_id=self.user.key().id(),
@@ -154,7 +155,6 @@ class PostPage(BlogHandler):
             self.redirect('/loginError')
             return  
         
-        
         self.redirect('/blog/%s' % post_id)
 
 class EditPost(BlogHandler):
@@ -163,12 +163,17 @@ class EditPost(BlogHandler):
                                 int(post_id), 
                                 parent = blog_key())
         post = db.get(key)
+        # Check first if the post exists and throw an error if it doesn't
+        if not post:
+            self.error(404)
+            return
+        # Check if user is logged in.
         if self.user: 
+            # Check if user is the blog post author
             if post.user_id == self.user.key().id():
                 self.render('editpost.html', 
                             subject = post.subject,
                             content = post.content)
-            
             else:
                 self.redirect('/editDeleteError')
         
@@ -177,6 +182,7 @@ class EditPost(BlogHandler):
             
     def post(self, post_id):
         
+        # Check if user is not logged in.
         if not self.user:
             self.redirect('/blog')
             
@@ -184,6 +190,7 @@ class EditPost(BlogHandler):
         content = self.request.get('content')
         
         if subject and content:
+            # Get all the necessary post parameters 
             key = db.Key.from_path('Post',
                                    int(post_id),
                                    parent = blog_key())
@@ -208,13 +215,20 @@ class DeletePost(BlogHandler):
                                 int(post_id),
                                 parent = blog_key())
         post = db.get(key)
+        # Check first if the post exists and throw an error if it doesn't
+        if not post:
+            self.error(404)
+            return
         
+        # Check if user is logged in.
         if self.user:
+            # Check if user is the blog post author
             if post.user_id == self.user.key().id():
                 post.delete()
                 self.redirect('/')
             else:
                 self.redirect('/editDeleteError')  
+        # Throw an error if user isn't signed in
         else:
             self.redirect('/loginError')
             
@@ -225,24 +239,33 @@ class EditComment(BlogHandler):
                                 int(comment_id),
                                 parent = blog_key())
         c = db.get(key)
+        # Check first if the comment exists and throw an error if it doesn't
+        if not c:
+            self.error(404)
+            return
+        # Check if user is logged in.
         if self.user:
+            # Check if user is the blog comment author
             if c.user_id == self.user.key().id():
                 self.render('editcomment.html', 
                             comment = c.comment)
             else:
                 self.redirect('/editDeleteError')
-            
+        
+        # Throw an error if user isn't signed in
         else:
             self.redirect('/loginError')
             
     
     def post(self, post_id, comment_id):
+        # Check if user is not logged in.
         if not self.user:
             self.redirect('/blog')
             
         comment = self.request.get('comment')
         
         if comment:
+            # Get all the necessary parameters
             key = db.Key.from_path('Comment',
                                    int(comment_id),
                                    parent = blog_key())
@@ -251,6 +274,7 @@ class EditComment(BlogHandler):
             c.put()
             self.redirect('/blog/%s' % post_id)
         
+        # Throw an error if user didn't provide all info. 
         else:
             error = "Please provide subject and content!"
             self.render('editpost.html',
@@ -265,13 +289,20 @@ class DeleteComment(BlogHandler):
                                    int(comment_id),
                                    parent = blog_key())
         c = db.get(key)
+        
+        # Check first if the comment exists and throw an error if it doesn't
+        if not c:
+            self.error(404)
+            return
+        # Check if user is logged in.
         if self.user:
-            # Chec if user is the author of this comment
+            # Check if user is the author of this comment
             if c.user_id == self.user.key().id():
                 c.delete()
                 self.redirect('/blog/%s' % str(post_id))
             else:    
                 self.redirect('/editDeleteError')
+        # Otherwise throw an error
         else:
             self.redirect('/commentError')
                 
@@ -293,12 +324,14 @@ class CommentError(BlogHandler):
         
 class NewPost(BlogHandler):
     def get(self):
+        #Check if user is logged in.
         if self.user:
             self.render("newpost.html")
         else:
             self.redirect("/login")
 
     def post(self):
+        #Check if user is not logged in.
         if not self.user:
             self.redirect('/login')
 
@@ -306,7 +339,7 @@ class NewPost(BlogHandler):
         content = self.request.get('content').replace('/n', '<br>')
         user_id = self.user.key().id()
        
-        # If we have subject and content of post, add to database and redirect to post page
+        # If we have subject and content of post, add to database and redirect to post page.
         if subject and content:
             print "user_id: %s" % user_id
 
@@ -358,27 +391,27 @@ class Signup(BlogHandler):
         params = dict(username = self.username,
                       email = self.email)
 
-        # Give an error if username isn't valid 
+        # Give an error if username isn't valid. 
         if not valid_username(self.username):
             params['error_username'] = "That's not a valid username."
             have_error = True
 
-        # Give an error if password isn't valid
+        # Give an error if password isn't valid.
         if not valid_password(self.password):
             params['error_password'] = "That wasn't a valid password."
             have_error = True
         
-        # Give an error if password and verify password don't match 
+        # Give an error if password and verify password don't match.
         elif self.password != self.verify:
             params['error_verify'] = "Your passwords didn't match."
             have_error = True
 
-        # Give an error if email isn't valid 
+        # Give an error if email isn't valid.
         if not valid_email(self.email):
             params['error_email'] = "That's not a valid email."
             have_error = True
 
-        # Go to signup-form if we have an error
+        # Go to signup-form if we have an error.
         if have_error:
             self.render('signup-form.html', **params)
         else:
@@ -390,9 +423,9 @@ class Signup(BlogHandler):
 
 class Register(Signup):
     def done(self):
-        #make sure the user doesn't already exist
+        # Make sure the user doesn't already exist.
         u = User.by_name(self.username)
-        # Give an error if username already exists
+        # Give an error if username already exists.
         if u:
             msg = 'That user already exists.'
             self.render('signup-form.html', error_username=msg)
@@ -408,19 +441,19 @@ class Login(BlogHandler):
     def get(self):
         self.render('login-form.html')
 
-    # Get user's input for username and password
+    # Get user's input for username and password.
     def post(self):
         username = self.request.get('username')
         password = self.request.get('password')
 
-        # get the user account that associates with that username and pw
+        # Get the user account that associates with that username and pw.
         u = User.login(username, password)
         if u:
-            # login and redirect to blog page
+            # Login and redirect to blog page.
             self.login(u)
             self.redirect('/')
         else:
-            # Give an error if there's no associated user account
+            # Give an error if there's no associated user account.
             msg ='Invalid login'
             self.render('login-form.html', error=msg)
 

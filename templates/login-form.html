@@ -1,44 +1,43 @@
-<!DOCTYPE html>
+{% extends "base.html" %}
 
-<html>
-  <head>
-    <title>Login</title>
-    <style type="text/css">
-      .label {text-align: right}
-      .error {color: red}
-    </style>
-
-  </head>
-
-  <body>
-    <h2>Login</h2>
-    <form method="post">
-      <table>
-        <tr>
-          <td class="label">
-            Username
-          </td>
-          <td>
-            <input type="text" name="username" value="{{username}}">
-          </td>
-        </tr>
-
-        <tr>
-          <td class="label">
-            Password
-          </td>
-          <td>
-            <input type="password" name="password" value="">
-          </td>
-        </tr>
-      </table>
-
-      <div class="error">
-        {{error}}
+{% block content %}
+  <div class="row">
+      <div class="col-md-4">
       </div>
-
-      <input type="submit">
-    </form>
-  </body>
-
-</html>
+      <div class="col-md-4">
+          <form method="post" id="login-form">
+              <div class="row">
+                  <h1 class="text-center col-sm-12">Login</h1>
+              </div>
+              <div class="row">
+                  <div class="col-xs-12">
+                      <div class="form-group">
+                          <label for="username">Username:</label>
+                          <input type="text" class="form-control" name="username" id="username">
+                      </div>
+                      <div class="form-group">
+                          <label for="password">Password:</label>
+                          <input type="password" class="form-control" name="password" id="password">
+                      </div>
+                  </div>
+              </div>
+              <div class="row">
+                  <div class="col-xs-4">
+                  </div>
+                  <div class="col-xs-4 text-center">
+                      <input type="submit" class="btn btn-primary" value="Login">
+                  </div>
+              </div>
+              {% if error %}
+              <div class="row">
+                  <div class="col-xs-12">
+                      <div class="alert alert-danger">
+                          {{error}}
+                      </div>
+                  </div>
+              </div>
+              {% endif %}
+          </form>
+      </div>
+  </div>
+{% endblock %}
