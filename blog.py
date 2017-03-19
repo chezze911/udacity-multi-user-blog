@@ -52,12 +52,15 @@ class BlogHandler(webapp2.RequestHandler):
         cookie_val = self.request.cookies.get(name)
         return cookie_val and check_secure_val(cookie_val)
 
+    # Sets a cookie when user logs in.
     def login(self, user):
         self.set_secure_cookie('user_id', str(user.key().id()))
 
+    # Reset the cookie when user logs out.
     def logout(self):
         self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
 
+    # Get the user from the secure cookie when page initializes
     def initialize(self, *a, **kw):
         webapp2.RequestHandler.initialize(self, *a, **kw)
         uid = self.read_secure_cookie('user_id')
@@ -77,7 +80,7 @@ class MainPage(BlogHandler):
 def blog_key(name = 'default'):
     return db.Key.from_path('blogs', name)
 
-# Renders homepage with all posts
+# Renders homepage with all posts.
 class BlogFront(BlogHandler):
     def get(self):
         posts = greetings = Post.all().order('-created')
@@ -85,17 +88,20 @@ class BlogFront(BlogHandler):
 
 class PostPage(BlogHandler):
     def get(self, post_id):
+        # Get key from blog post.  
         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
         post = db.get(key)
         comments = db.GqlQuery("select * from Comment where post_id = "+post_id+" order by created desc")
         likes = db.GqlQuery("select * from Like where post_id="+post_id)
         
+        # if the post doesn't exist throw an error
         if not post:
             self.error(404)
             return
 
         error = self.request.get("error")
         
+        # Render the page and show blog content, comments, likes, etc. 
         self.render("permalink.html", 
                     post=post, 
                     comments=comments, 
@@ -103,6 +109,7 @@ class PostPage(BlogHandler):
                     error=error)
 
     def post(self, post_id):
+        # get all the necessary parameters 
         key = db.Key.from_path('Post', 
                                int(post_id), 
                                parent=blog_key())
@@ -116,18 +123,20 @@ class PostPage(BlogHandler):
             self.error(404)
             return
               
-        # When like is clicked, like value increases by 1 if user is not post user         
+        # Check if user is signed in.
         if(self.user):
-            print "inside post method"
+            # When like is clicked, like value increases by 1 if user is not post user.
             if(self.request.get('like') and self.request.get('like') == "updateLike"):
                 likes = db.GqlQuery("select * from Like where post_id = "+post_id+" and user_id = "+
                                     str(self.user.key().id()))
             print likes.count()
+            # Check if user is trying t olike his own post.  
             if self.user.key().id() == post.user_id:
                 self.write("You cannot like/comment on your own post!")
             
                 return 
             
+            #
             elif likes.count()==0:
                 l = Like(parent=blog_key(), 
                          user_id=self.user.key().id(),
@@ -202,7 +211,6 @@ class DeletePost(BlogHandler):
         
         if self.user:
             if post.user_id == self.user.key().id():
-                # self.render('deletepost.html')
                 post.delete()
                 self.redirect('/')
             else:
@@ -258,6 +266,7 @@ class DeleteComment(BlogHandler):
                                    parent = blog_key())
         c = db.get(key)
         if self.user:
+            # Chec if user is the author of this comment
             if c.user_id == self.user.key().id():
                 c.delete()
                 self.redirect('/blog/%s' % str(post_id))

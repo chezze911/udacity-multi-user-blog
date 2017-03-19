@@ -38,7 +38,6 @@
             {% for c in comments %}
             <blockquote>
                 {{ c.comment }}
-                {{ c.user_id }}
                 {% if c.user_id %} 
                     <a class="btn btn-danger pull-right" href="/blog/deletecomment/{{post.key().id()}}/{{c.key().id()}}">Delete Comment</a>
                     <a class="btn btn-primary pull-right" href="/blog/editcomment/{{post.key().id()}}/{{c.key().id()}}">Edit Comment</a>
