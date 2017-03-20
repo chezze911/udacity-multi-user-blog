@@ -182,13 +182,15 @@ class EditPost(BlogHandler):
             self.redirect('/loginError')
 
     def post(self, post_id):
-
+        subject = self.request.get('subject')
+        content = self.request.get('content')
+        # if the post doesn't exist throw an error
+        if not post:
+            self.error(404)
+            return
         # Check if user is not logged in.
         if not self.user:
             self.redirect('/blog')
-
-        subject = self.request.get('subject')
-        content = self.request.get('content')
 
         if subject and content:
             # Get all the necessary post parameters
@@ -230,14 +232,18 @@ class DeletePost(BlogHandler):
             self.render('login.html')
 
     def post(self, post_id):
-        if not self.user:
-            return self.redirect('/login')
         key = db.Key.from_path(
                                'Post',
                                int(post_id),
                                parent=blog_key()
                                )
         post = db.get(key)
+        # if the post doesn't exist throw an error
+        if not post:
+            self.error(404)
+            return
+        if not self.user:
+            return self.redirect('/login')
 
         # Check if user is the blog post author
         if post.user_id == self.user.key().id():
@@ -273,7 +279,17 @@ class EditComment(BlogHandler):
             self.redirect('/loginError')
 
     def post(self, post_id, comment_id):
+        key = db.Key.from_path(
+                               'Comment',
+                               int(comment_id),
+                               parent=blog_key()
+                               )
+        c = db.get(key)
         comment = self.request.get('comment')
+         # Check first if the comment exists and throw an error if it doesn't
+        if not c:
+            self.error(404)
+            return
         # Check if user is not logged in.
         if not self.user:
             self.redirect('/blog')
@@ -323,6 +339,12 @@ class DeleteComment(BlogHandler):
                            parent=blog_key()
                            )
         c = db.get(key)
+        
+        # Check first if the comment exists and throw an error if it doesn't
+        if not c:
+            self.error(404)
+            return
+        
         if not self.user:
             return self.redirect('/commentError')
 
