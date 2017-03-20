@@ -224,15 +224,27 @@ class DeletePost(BlogHandler):
 
         # Check if user is logged in.
         if self.user:
-            # Check if user is the blog post author
-            if post.user_id == self.user.key().id():
-                post.delete()
-                self.redirect('/')
-            else:
-                self.redirect('/editDeleteError')
+            self.render('deletepost.html', post=post)
         # Throw an error if user isn't signed in
         else:
-            self.redirect('/loginError')
+            self.render('login.html')
+
+    def post(self, post_id):
+        if not self.user:
+            return self.redirect('/login')
+        key = db.Key.from_path(
+                               'Post',
+                               int(post_id),
+                               parent=blog_key()
+                               )
+        post = db.get(key)
+
+        # Check if user is the blog post author
+        if post.user_id == self.user.key().id():
+            post.delete()
+            self.redirect('/')
+        else:
+            self.redirect('/editDeleteError')
 
 
 class EditComment(BlogHandler):
@@ -300,16 +312,24 @@ class DeleteComment(BlogHandler):
         # Check if user is logged in.
         if self.user:
             self.render("deletecomment.html")
-
-            # Check if user is the author of this comment
-            if c.user_id == self.user.key().id():
-                c.delete()
-                self.redirect('/blog/%s' % str(post_id))
-            else:
-                self.redirect('/editDeleteError')
         # Otherwise throw an error
         else:
             self.redirect('/commentError')
+
+    def post(self, post_id, comment_id):
+        key = db.Key.from_path(
+                           'Post',
+                           int(post_id),
+                           parent=blog_key()
+                           )
+        c = db.get(key)
+        if not self.user:
+            return self.redirect('/commentError')
+
+        # Check if user is the author of this comment
+        if c.user_id == self.user.key().id():
+            c.delete()
+        self.redirect('/blog/%s' % str(post_id))
 
 
 class LoginError(BlogHandler):
