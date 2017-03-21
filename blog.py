@@ -109,7 +109,7 @@ class PostPage(BlogHandler):
         error = self.request.get("error")
 
         # Render the page and show blog content, comments, likes, etc.
-        self.render("permalink.html", post=post, comments=comments,
+        self.render("permalink.html", post=post, comments=comments
                     numOfLikes=likes.count(),error=error)
 
 
@@ -135,10 +135,9 @@ class PostPage(BlogHandler):
                 likes = db.GqlQuery("select * from Like where post_id =" +
                                     post_id + " and user_id = " +
                                     str(self.user.key().id()))
-            print likes.count()
-            # Check if user is trying t olike his own post.
+            # Check if user is trying to like his own post.
             if self.user.key().id() == post.user_id:
-                self.write("You cannot like/comment on your own post!")
+                self.write("You cannot comment on your own post!")
                 return
             # add 1 to likes count if value is 0
             elif likes.count() == 0:
@@ -206,7 +205,7 @@ class PostPage(BlogHandler):
 
 #         self.redirect('/blog/%s' % post_id)
 
-# class LikePost(BlogHandler):
+# class LikePage(BlogHandler):
 #     def get(self, post_id):
 #         # Get key from blog post.
 #         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
@@ -242,7 +241,6 @@ class PostPage(BlogHandler):
 #                 likes = db.GqlQuery("select * from Like where post_id =" +
 #                                     post_id + " and user_id = " +
 #                                     str(self.user.key().id()))
-#             print likes.count()
 #             # Check if user is trying t olike his own post.
 #             if self.user.key().id() == post.user_id:
 #                 self.write("You cannot like on your own post!")
@@ -321,46 +319,46 @@ class EditPost(BlogHandler):
                         error=error)
 
 
-class DeletePost(BlogHandler):
-    def get(self, post_id):
-        key = db.Key.from_path(
-                               'Post',
-                               int(post_id),
-                               parent=blog_key()
-                               )
-        post = db.get(key)
-        # Check first if the post exists and throw an error if it doesn't
-        if not post:
-            self.error(404)
-            return
+# class DeletePost(BlogHandler):
+#     def get(self, post_id):
+#         key = db.Key.from_path(
+#                                'Post',
+#                                int(post_id),
+#                                parent=blog_key()
+#                                )
+#         post = db.get(key)
+#         # Check first if the post exists and throw an error if it doesn't
+#         if not post:
+#             self.error(404)
+#             return
 
-        # Check if user is logged in.
-        if self.user:
-            self.render('deletepost.html', post=post)
-        # Throw an error if user isn't signed in
-        else:
-            self.render('login.html')
+#         # Check if user is logged in.
+#         if self.user:
+#             self.render('deletepost.html', post=post)
+#         # Throw an error if user isn't signed in
+#         else:
+#             self.render('login.html')
 
-    def post(self, post_id):
-        key = db.Key.from_path(
-                               'Post',
-                               int(post_id),
-                               parent=blog_key()
-                               )
-        post = db.get(key)
-        # if the post doesn't exist throw an error
-        if not post:
-            self.error(404)
-            return
-        if not self.user:
-            return self.redirect('/login')
+#     def post(self, post_id):
+#         key = db.Key.from_path(
+#                                'Post',
+#                                int(post_id),
+#                                parent=blog_key()
+#                                )
+#         post = db.get(key)
+#         # if the post doesn't exist throw an error
+#         if not post:
+#             self.error(404)
+#             return
+#         if not self.user:
+#             return self.redirect('/login')
 
-        # Check if user is the blog post author
-        if post.user_id == self.user.key().id():
-            post.delete()
-            self.redirect('/')
-        else:
-            self.redirect('/editDeleteError')
+#         # Check if user is the blog post author
+#         if post.user_id == self.user.key().id():
+#             post.delete()
+#             self.redirect('/')
+#         else:
+#             self.redirect('/editDeleteError')
 
 
 class EditComment(BlogHandler):
@@ -424,44 +422,79 @@ class EditComment(BlogHandler):
 
 class DeleteComment(BlogHandler):
     def get(self, post_id, comment_id):
-        key = db.Key.from_path(
-                               'Post',
-                               int(post_id),
-                               parent=blog_key()
-                               )
+        key = db.Key.from_path('Comment', 
+                                   int(comment_id),
+                                   parent = blog_key())
         c = db.get(key)
-
-        # Check first if the comment exists and throw an error if it doesn't
-        if not c:
-            self.error(404)
-            return
-        # Check if user is logged in.
         if self.user:
-            self.render("deletecomment.html")
-        # Otherwise throw an error
+            if c.user_id == self.user.key().id():
+                c.delete()
+                self.redirect('/blog/%s' % str(post_id))
+            else:    
+                self.redirect('/editDeleteError')
         else:
             self.redirect('/commentError')
+# class DeleteComment(BlogHandler):
+#     def get(self, post_id, comment_id):
+    #     key = db.Key.from_path(
+    #                            'Post',
+    #                            int(post_id),
+    #                            parent=blog_key()
+    #                            )
+    #     c = db.get(key)
 
-    def post(self, post_id, comment_id):
-        key = db.Key.from_path(
-                           'Post',
-                           int(post_id),
-                           parent=blog_key()
-                           )
-        c = db.get(key)
+    #     # Check first if the comment exists and throw an error if it doesn't
+    #     if not c:
+    #         self.error(404)
+    #         return
+    #     # Check if user is logged in.
+    #     if self.user:
+    #         self.render("deletecomment.html")
+    #     # Otherwise throw an error
+    #     else:
+    #         self.redirect('/commentError')
+
+    # def post(self, post_id, comment_id):
+        # key = db.Key.from_path(
+        #                    'Post',
+        #                    int(post_id),
+        #                    parent=blog_key()
+        #                    )
+        # c = db.get(key)
         
-        # Check first if the comment exists and throw an error if it doesn't
-        if not c:
+        # # Check first if the comment exists and throw an error if it doesn't
+        # if not c:
+        #     self.error(404)
+        #     return
+        
+        # if not self.user:
+        #     return self.redirect('/commentError')
+
+        # # Check if user is the author of this comment
+        # if c.user_id == self.user.key().id():
+        #     print "in method"
+        #     c.delete()
+        # self.redirect('/blog/%s' % str(post_id))
+
+class DeletePost(BlogHandler):
+    def get(self, post_id):
+        key = db.Key.from_path('Post',
+                                int(post_id),
+                                parent = blog_key())
+        post = db.get(key)
+        
+        if not post:
             self.error(404)
             return
         
-        if not self.user:
-            return self.redirect('/commentError')
-
-        # Check if user is the author of this comment
-        if c.user_id == self.user.key().id():
-            c.delete()
-        self.redirect('/blog/%s' % str(post_id))
+        if self.user:
+            if post.user_id == self.user.key().id():
+                post.delete()
+                self.redirect('/')
+            else:
+                self.redirect('/editDeleteError')  
+        else:
+            self.redirect('/loginError')
 
 
 class LoginError(BlogHandler):
@@ -638,6 +671,7 @@ app = webapp2.WSGIApplication([('/?', BlogFront),
                                 EditComment),
                                ('/blog/deletecomment/([0-9]+)/([0-9]+)',
                                 DeleteComment),
+                               ('/blog/like/([0-9]+)', LikePage),
                                # ('/blog/like/([0-9]+)', LikePost)
                                # ('/blog/newcomment/([0-9]+)', NewComment),
                                ],
