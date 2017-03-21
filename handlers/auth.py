@@ -2,41 +2,12 @@ from .base import Handler
 from entities.entity import User
 import utils
 
-# Defines a valid username
-USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
-
-
-def valid_username(username):
-    return username and USER_RE.match(username)
-
-# Defines a valid password
-PASS_RE = re.compile(r"^.{3,20}$")
-
-
-def valid_password(password):
-    return password and PASS_RE.match(password)
-
-# Defines a valid email
-EMAIL_RE = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
-
-
-def valid_email(email):
-    return not email or EMAIL_RE.match(email)
 
 
 class BlogHandler(webapp2.RequestHandler):
     """
     Adds common utility methods needed for authentication
     """
-    def write(self, *a, **kw):
-        self.response.out.write(*a, **kw)
-
-    def render_str(self, template, **params):
-        params['user'] = self.user
-        return jinja_render_str(template, **params)
-
-    def render(self, template, **kw):
-        self.write(self.render_str(template, **kw))
 
     def set_secure_cookie(self, name, val):
         cookie_val = make_secure_val(val)

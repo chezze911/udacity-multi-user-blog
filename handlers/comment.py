@@ -12,38 +12,38 @@ import copy
 
 
 
-class NewComment(BlogHandler):
+# class NewComment(BlogHandler):
 
-	def post(self, post_id):
-        # get all the necessary parameters
-        key = db.Key.from_path('Post', int(post_id), parent=blog_key())
-        post = db.get(key)
-        c = ""
-        comments = db.GqlQuery("select * from Comment where post_id = " +
-                               post_id + " order by created desc")
+# 	def post(self, post_id):
+#         # get all the necessary parameters
+#         key = db.Key.from_path('Post', int(post_id), parent=blog_key())
+#         post = db.get(key)
+#         c = ""
+#         comments = db.GqlQuery("select * from Comment where post_id = " +
+#                                post_id + " order by created desc")
 
-        # Check first if the post exists and throw an error if it doesn't
-        if not post:
-            self.error(404)
-            return
+#         # Check first if the post exists and throw an error if it doesn't
+#         if not post:
+#             self.error(404)
+#             return
 
-        # Check if user is signed in.
-        if self.user:
-            # Check if user is trying t olike his own post.
-            if self.user.key().id() == post.user_id:
-                self.write("You cannot comment on your own post!")
-                return
-            # Commenting on a post creates a new comment tuple.
-            if(self.request.get('comment')):
-                c = Comment(parent=blog_key(), user_id=self.user.key().id(),
-                            post_id=int(post_id),
-                            comment=self.request.get('comment'))
-                c.put()
-        else:
-            self.redirect('/loginError')
-            return
+#         # Check if user is signed in.
+#         if self.user:
+#             # Check if user is trying t olike his own post.
+#             if self.user.key().id() == post.user_id:
+#                 self.write("You cannot comment on your own post!")
+#                 return
+#             # Commenting on a post creates a new comment tuple.
+#             if(self.request.get('comment')):
+#                 c = Comment(parent=blog_key(), user_id=self.user.key().id(),
+#                             post_id=int(post_id),
+#                             comment=self.request.get('comment'))
+#                 c.put()
+#         else:
+#             self.redirect('/loginError')
+#             return
 
-        self.redirect('/blog/%s' % post_id)
+#         self.redirect('/blog/%s' % post_id)
 
 
         

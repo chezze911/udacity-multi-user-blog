@@ -1,32 +1,13 @@
 """
 This file will contain all the entities required for Blog app
 """
-import utils, fields
+import utils
 import random
 import hashlib
 
 from string import letters
 from google.appengine.ext import db
 
-
-# user stuff
-# Make salt to secure password.
-def make_salt(length=5):
-    return ''.join(random.choice(letters) for x in xrange(length))
-
-
-# Make password hash containing name, pw, and a salt.
-def make_pw_hash(name, pw, salt=None):
-    if not salt:
-        salt = make_salt()
-    h = hashlib.sha256(name + pw + salt).hexdigest()
-    return '%s,%s' % (salt, h)
-
-
-# Check that pw is valid by hashing and comparing it to existing hash pw.
-def valid_pw(name, password, h):
-    salt = h.split(',')[0]
-    return h == make_pw_hash(name, password, salt)
 
 
 # Get key from user table.
