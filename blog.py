@@ -196,26 +196,30 @@ class EditPost(BlogHandler):
         if not self.user:
             self.redirect('/blog')
         
-        subject = self.request.get('subject')
-        content = self.request.get('content')
+        # Check if user is logged in.
+        if self.user:
+            # Check if user is the blog post author
+            if post.user_id == self.user.key().id():
+                
+                subject = self.request.get('subject')
+                content = self.request.get('content')
 
-        if subject and content:
-            # Get all the necessary post parameters
-            key = db.Key.from_path('Post',
-                                   int(post_id),
-                                   parent=blog_key())
-            post = db.get(key)
-            post.subject = subject
-            post.content = content
-            post.put()
+                if subject and content:
+                    post.subject = subject
+                    post.content = content
+                    post.put()
 
-            self.redirect('/blog/%s' % post_id)
+                    self.redirect('/blog/%s' % post_id)
+                else:
+                    error = 'Please provide subject and content!'
+                    self.render('editpost.html',
+                                subject=subject,
+                                content=content,
+                                error=error)
+            else:
+                self.redirect('/editDeleteError')   
         else:
-            error = 'Please provide subject and content!'
-            self.render('editpost.html',
-                        subject=subject,
-                        content=content,
-                        error=error)
+            self.redirect('/loginError')
 
 
 class EditComment(BlogHandler):
@@ -258,23 +262,28 @@ class EditComment(BlogHandler):
         # Check if user is not logged in.
         if not self.user:
             self.redirect('/blog')
-        if comment:
-            # Get all the necessary parameters
-            key = db.Key.from_path('Comment',
-                                   int(comment_id),
-                                   parent=blog_key())
-            c = db.get(key)
-            c.comment = comment
-            c.put()
-            self.redirect('/blog/%s' % post_id)
+            
+        # Check if user is logged in.
+        if self.user:
+            # Check if user is the blog post author
+            if c.user_id == self.user.key().id():
+        
+                if comment:
+                    c.comment = comment
+                    c.put()
+                    self.redirect('/blog/%s' % post_id)
 
-        # Throw an error if user didn't provide all info.
+                # Throw an error if user didn't provide all info.
+                else:
+                    error = "Please provide subject and content!"
+                    self.render('editpost.html',
+                                subject=subject,
+                                content=content,
+                                error=error)
+            else:
+                self.redirect('/editDeleteError')   
         else:
-            error = "Please provide subject and content!"
-            self.render('editpost.html',
-                        subject=subject,
-                        content=content,
-                        error=error)
+            self.redirect('/loginError')
 
 
 class DeleteComment(BlogHandler):
