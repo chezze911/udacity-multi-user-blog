@@ -109,8 +109,8 @@ class PostPage(BlogHandler):
         error = self.request.get("error")
 
         # Render the page and show blog content, comments, likes, etc.
-        self.render("permalink.html", post=post, comments=comments
-                    numOfLikes=likes.count(),error=error)
+        self.render("permalink.html", post=post, comments=comments,
+                    numOfLikes=likes.count(), error=error)
 
 
     def post(self, post_id):
@@ -488,6 +488,5 @@ app = webapp2.WSGIApplication([('/?', BlogFront),
                                 EditComment),
                                ('/blog/deletecomment/([0-9]+)/([0-9]+)',
                                 DeleteComment),
-                               ('/blog/like/([0-9]+)', LikePage),
                                ],
                               debug=True)
